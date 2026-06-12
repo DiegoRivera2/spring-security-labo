@@ -1,0 +1,128 @@
+{
+  "info": {
+    "name": "Spring Security Labo - Auth & Finanzas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000/api" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"mi-carnet\"\n}"
+        },
+        "url": "{{baseUrl}}/auth/login"
+      }
+    },
+    {
+      "name": "Signup",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"usuario123\",\n  \"name\": \"Nombre\",\n  \"surname\": \"Apellido\",\n  \"email\": \"correo@dominio.com\",\n  \"password\": \"MiPassw0rd!\"\n}"
+        },
+        "url": "{{baseUrl}}/auth/signup"
+      }
+    },
+    {
+      "name": "Profile",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/auth/profile"
+      }
+    },
+    {
+      "name": "Update Profile",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin\",\n  \"name\": \"Administrador\",\n  \"surname\": \"Sistema\",\n  \"email\": \"admin@uca.edu\"\n}"
+        },
+        "url": "{{baseUrl}}/auth/update/profile"
+      }
+    },
+    {
+      "name": "Update Password",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"oldpassword\": \"mi-carnet\",\n  \"newpassword\": \"MiPassw0rd!\",\n  \"confirmpassword\": \"MiPassw0rd!\"\n}"
+        },
+        "url": "{{baseUrl}}/auth/update/password"
+      }
+    },
+    {
+      "name": "List Cuentas",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/finanzas/cuentas"
+      }
+    },
+    {
+      "name": "Create Cuenta",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"alias\": \"Cuenta Principal\",\n  \"moneda\": \"USD\",\n  \"tipo\": \"AHORRO\"\n}"
+        },
+        "url": "{{baseUrl}}/finanzas/cuentas"
+      }
+    },
+    {
+      "name": "List Movimientos",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/finanzas/movimientos?page=0&size=10"
+      }
+    },
+    {
+      "name": "Transferencia",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"cuentaOrigenId\": 1,\n  \"cuentaDestinoId\": 2,\n  \"monto\": 100,\n  \"descripcion\": \"Transferencia de prueba\"\n}"
+        },
+        "url": "{{baseUrl}}/finanzas/transferencias"
+      }
+    },
+    {
+      "name": "List Categorias",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/finanzas/categorias"
+      }
+    }
+  ]
+}

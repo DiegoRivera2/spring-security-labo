@@ -1,6 +1,8 @@
 package com.server.app.controllers;
 
 import com.server.app.dto.response.ExceptionResponse;
+import com.server.app.exceptions.BadRequestException;
+import com.server.app.exceptions.ConfictException;
 import com.server.app.exceptions.ServerException;
 import com.server.app.exceptions.NotFoundException;
 import com.server.app.exceptions.UnauthorizedException;
@@ -54,6 +56,16 @@ public class AdviceController {
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ExceptionResponse> handleNotFound(NotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ExceptionResponse> handleBadRequest(BadRequestException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(ConfictException.class)
+    public ResponseEntity<ExceptionResponse> handleConflict(ConfictException ex) {
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

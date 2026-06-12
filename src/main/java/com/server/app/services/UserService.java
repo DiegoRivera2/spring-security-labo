@@ -7,12 +7,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.server.app.config.JsonWebToken;
+import com.server.app.dto.auth.LoginDto;
+import com.server.app.dto.auth.SignUpDto;
+import com.server.app.dto.auth.UpdatePasswordDto;
+import com.server.app.dto.auth.UpdateProfileDto;
+import com.server.app.dto.response.AuthResponse;
 import com.server.app.dto.user.UserCreateDto;
 import com.server.app.dto.user.UserUpdateDto;
 import com.server.app.entities.Role;
 import com.server.app.entities.User;
+import com.server.app.exceptions.BadRequestException;
 import com.server.app.exceptions.ConfictException;
 import com.server.app.exceptions.NotFoundException;
+import com.server.app.exceptions.UnauthorizedException;
 import com.server.app.repositories.RoleRepository;
 import com.server.app.repositories.UserRepository;
 
@@ -21,8 +29,84 @@ import com.server.app.repositories.UserRepository;
 public class UserService {
 
   private final PasswordEncoder passwordEncoder;
+  private final JsonWebToken jsonWebToken;
   private final UserRepository userRepository;
   private final RoleRepository roleRepository;
+
+  public AuthResponse login(LoginDto dto) {
+    User user = userRepository.findUserByUsername(dto.getUsername())
+        .orElseThrow(() -> new UnauthorizedException("Credenciales inválidas"));
+
+    if (user.isBlocked()) {
+      throw new UnauthorizedException("Your account has been blocked");
+    }
+
+    if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+      throw new UnauthorizedException("Credenciales inválidas");
+    }
+
+    return new AuthResponse(jsonWebToken.createToken(user), user);
+  }
+
+  @Transactional
+  public AuthResponse signUp(SignUpDto dto) {
+    uniqueUsername(dto.getUsername(), null);
+    uniqueEmail(dto.getEmail(), null);
+
+    Role role = roleRepository.findByName("ADMIN")
+        .orElseThrow(() -> new NotFoundException("Rol ADMIN no encontrado"));
+
+    User user = new User();
+    user.setUsername(dto.getUsername());
+    user.setName(dto.getName());
+    user.setSurname(dto.getSurname());
+    user.setEmail(dto.getEmail());
+    user.setPassword(dto.getPassword());
+    user.setRole(role);
+
+    User saved = userRepository.save(user);
+    return new AuthResponse(jsonWebToken.createToken(saved), saved);
+  }
+
+  @Transactional
+  public AuthResponse updateProfile(int userId, UpdateProfileDto dto) {
+    User user = findById(userId);
+
+    if (user.isBlocked()) {
+      throw new ConfictException("The user: " + user.getUsername() + " is locked");
+    }
+
+    uniqueUsername(dto.getUsername(), userId);
+    uniqueEmail(dto.getEmail(), userId);
+
+    user.setUsername(dto.getUsername());
+    user.setName(dto.getName());
+    user.setSurname(dto.getSurname());
+    user.setEmail(dto.getEmail());
+
+    User saved = userRepository.save(user);
+    return new AuthResponse(jsonWebToken.createToken(saved), saved);
+  }
+
+  @Transactional
+  public User updatePassword(int userId, UpdatePasswordDto dto) {
+    User user = findById(userId);
+
+    if (user.isBlocked()) {
+      throw new ConfictException("The user: " + user.getUsername() + " is locked");
+    }
+
+    if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+      throw new BadRequestException("La contraseña actual es incorrecta");
+    }
+
+    if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+      throw new BadRequestException("Las contraseñas no coinciden");
+    }
+
+    user.setPassword(dto.getNewPassword());
+    return userRepository.save(user);
+  }
 
   @Transactional
   public User create(UserCreateDto dto) {
@@ -33,7 +117,7 @@ public class UserService {
     user.setName(dto.getName());
     user.setSurname(dto.getSurname());
     user.setEmail(dto.getEmail());
-    user.setPassword(passwordEncoder.encode(dto.getPassword()));
+    user.setPassword(dto.getPassword());
 
     if (dto.getRole() != null) {
       Role role = roleRepository.findById(dto.getRole())
@@ -51,6 +135,10 @@ public class UserService {
   public User findById(int id) {
     return userRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+  }
+
+  public User findByIdOptional(int id) {
+    return userRepository.findById(id).orElse(null);
   }
 
   @Transactional
