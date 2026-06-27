@@ -249,6 +249,54 @@ docker build -t spring-app .
 4. Usa `POST /api/roles` para crear roles y asignar permisos.
 5. Ajusta `SecurityRules` si agregas rutas públicas o auth-only.
 
+## DevOps — Viaje al pasado
 
+### Fase 1: Tests unitarios (Mockito)
 
+Pruebas aisladas de la capa de servicios sin `@SpringBootTest` ni base de datos:
+
+```bash
+./mvnw test
+```
+
+| Servicio | Archivo de test |
+|----------|-----------------|
+| UserService | `src/test/java/.../UserServiceTest.java` |
+| FinanzaService | `src/test/java/.../FinanzaServiceTest.java` |
+| RoleService | `src/test/java/.../RoleServiceTest.java` |
+| PermissionService | `src/test/java/.../PermissionServiceTest.java` |
+
+### Fase 2: Docker
+
+1. Copia `.env.example` a `.env` y completa `POSTGRES_PASSWORD` y `SPRING_DATASOURCE_PASSWORD`.
+2. Levanta la stack:
+
+```bash
+docker compose up -d --build
+```
+
+3. Verifica:
+
+```bash
+curl http://localhost:4000/api/public/info
+```
+
+- **Dockerfile**: build multi-stage, usuario `spring` (no root).
+- **docker-compose.yml**: red privada `backend`, credenciales vía `.env`.
+
+### Fase 3: CI/CD (GitHub Actions)
+
+| Workflow | Archivo | Disparador |
+|----------|---------|------------|
+| CI | `.github/workflows/ci.yml` | push/PR a `main` — tests + smoke test con Docker |
+| CD | `.github/workflows/cd.yml` | push a `main` — publica imagen en Docker Hub |
+
+**Secrets requeridos en GitHub:**
+
+| Secret | Uso |
+|--------|-----|
+| `DOCKERHUB_USERNAME` | Usuario de Docker Hub |
+| `DOCKERHUB_TOKEN` | Access token de Docker Hub |
+
+Imagen publicada: `{DOCKERHUB_USERNAME}/spring-security-labo:latest`
 
